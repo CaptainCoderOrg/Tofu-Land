@@ -16,5 +16,8 @@
         "fget",
         "spr",
         "rectb"
+    ],
+    "Lua.diagnostics.disable": [
+        "lowercase-global"
     ]
 }

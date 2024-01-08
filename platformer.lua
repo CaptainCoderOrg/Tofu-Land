@@ -16,96 +16,47 @@ VIEW = {
  h = 17
 }
 
-SCREEN = { x = 0, y = 1}
-
-function init()
- T = 0
- START = { x = 20 + (VIEW.w * SCREEN.x * 8), y = 60 + (VIEW.h * SCREEN.y * 8) }
- SPAWN_ORB = nil
- LIVES = 3
- -- level_time = 120
- TIME_REMAINING = 120
- X = START.x
- Y = START.y
- restore_collected()
-end
+SCREEN = { x = 0, y = 1 }
+PLAYER = {
+ x = 0,
+ y = 0,
+ vx = 0,
+ vy = 0,
+ dir = 0,
+ is_dead = false,
+ is_on_ground = false
+}
 CAM = { x = 0, y = 0 }
-VELOCITY = { x = 0, y = 0, max_y = 4 }
-DIR = 0
-DEAD = false
-ON_GROUND = false
+MAX_VY = 4
+
 SPEED = 1.1
 RUN = .5
 GRAVITY = .3
 JUMP = -4.6
+ANIM_SPEED = 7
+FRIEND = nil
+
 BOUNCE = { short = -3, high = -5.2 }
 COLLECTED = {}
-ANIM_SPEED = 7
 HIT_BOXES = {}
 GROUND = {}
 SPIKES = {}
 ORBS = {}
 ENEMIES = {}
 DEAD_ENEMIES = {}
-FRIEND = nil
 SPR = {
- TOFU_IDLE = {
-  id = 288,
-  frames = 1,
-  w = 2
- },
- TOFU_MOVE = {
-  id = 290,
-  frames = 4,
-  w = 2
- },
- TOFU_DEATH = {
-  id = 320,
-  frames = 2,
-  w = 2
- },
- TOFU_SMILE = {
-  id = 298,
-  frames = 1,
-  w = 2
- },
- TOFU_FRIEND = {
-  id = 300,
-  frames = 1,
-  w = 2
- },
- FRIEND_SMILE = {
-  id = 302,
-  frames = 1,
-  w = 2
- },
- ORB = {
-  id = 448,
-  frames = 4,
-  w = 2
- },
- ORB_COLLECT = {
-  id = 416,
-  frames = 4,
-  w = 2
- },
- ENEMY_IDLE = {
-  id = 352,
-  frames = 1,
-  w = 2
- },
- ENEMY_MOVE = {
-  id = 354,
-  frames = 4,
-  w = 2
- },
- ENEMY_DEATH = {
-  id = 384,
-  frames = 2,
-  w = 2
- }
+ TOFU_IDLE = { id = 288, frames = 1, w = 2 },
+ TOFU_MOVE = { id = 290, frames = 4, w = 2 },
+ TOFU_DEATH = { id = 320, frames = 2, w = 2 },
+ TOFU_SMILE = { id = 298, frames = 1, w = 2 },
+ TOFU_FRIEND = { id = 300, frames = 1, w = 2 },
+ FRIEND_SMILE = { id = 302, frames = 1, w = 2 },
+ ORB = { id = 448, frames = 4, w = 2 },
+ ORB_COLLECT = { id = 416, frames = 4, w = 2 },
+ ENEMY_IDLE = { id = 352, frames = 1, w = 2 },
+ ENEMY_MOVE = { id = 354, frames = 4, w = 2 },
+ ENEMY_DEATH = { id = 384, frames = 2, w = 2 }
 }
-
 ANIMS = {}
 WAIT = {}
 EMPTY = {
@@ -114,14 +65,11 @@ EMPTY = {
  top = 0,
  bottom = 0
 }
-
 SLOW_D = 1
 SLOW_T = 1
-
 MODE = "TITLE"
 GAME_OVER_T = 0
 WIN_T = 0
-
 TRACK = nil
 CURRENTLY_PLAYING = nil
 
@@ -143,6 +91,17 @@ function TIC()
   debug_text()
  end
  T = T + 1
+end
+
+function init()
+ T = 0
+ START = { x = 20 + (VIEW.w * SCREEN.x * 8), y = 60 + (VIEW.h * SCREEN.y * 8) }
+ SPAWN_ORB = nil
+ LIVES = 3
+ TIME_REMAINING = 120
+ PLAYER.x = START.x
+ PLAYER.y = START.y
+ restore_collected()
 end
 
 function WINSCREEN()
@@ -279,7 +238,7 @@ function update()
  if T % 60 == 0 and MODE == "PLAY" then
   TIME_REMAINING = math.max(0, TIME_REMAINING - 1)
  end
- if TIME_REMAINING == 0 and not DEAD then
+ if TIME_REMAINING == 0 and not PLAYER.is_dead then
   LIVES = 0
   die()
   return
@@ -321,10 +280,10 @@ function hit_enemy()
 end
 
 function die()
- play_animation(SPR.TOFU_DEATH, X, Y, 30)
+ play_animation(SPR.TOFU_DEATH, PLAYER.x, PLAYER.y, 30)
  -- sfx(1, "C-5", 60, 0, 8)
  sfx(1, "D#5", 60, 3, 8)
- DEAD = true
+ PLAYER.is_dead = true
  wait(120, respawn)
 end
 
@@ -342,7 +301,7 @@ function update_enemies()
    if btn(4) then
     bounce = BOUNCE.high
    end
-   VELOCITY.y = bounce
+   PLAYER.vy = bounce
    sfx(3, "C-3", 30, 3, 8)
    -- sfx(3, "G-3", 30, 0, 8)
   elseif not on_screen(box) then
@@ -402,32 +361,32 @@ function wait(frames, act)
 end
 
 function update_position()
- ON_GROUND = check_ground()
- if ON_GROUND then
-  math.floor(Y)
+ PLAYER.is_on_ground = check_ground()
+ if PLAYER.is_on_ground then
+  math.floor(PLAYER.y)
  else
-  VELOCITY.y = math.min(VELOCITY.max_y, VELOCITY.y + GRAVITY)
+  PLAYER.vy = math.min(MAX_VY, PLAYER.vy + GRAVITY)
  end
 
- if can_move(VELOCITY.x, 0) then
-  X = X + VELOCITY.x
+ if can_move(PLAYER.vx, 0) then
+  PLAYER.x = PLAYER.x + PLAYER.vx
  else
-  VELOCITY.x = 0
+  PLAYER.vx = 0
  end
 
- if can_move(0, VELOCITY.y) then
-  Y = Y + VELOCITY.y
+ if can_move(0, PLAYER.vy) then
+  PLAYER.y = PLAYER.y + PLAYER.vy
  else
-  VELOCITY.y = 0
+  PLAYER.vy = 0
  end
 end
 
 function tofu_ground_collider()
  local box = {
-  left = X + 1,
-  top = Y + VELOCITY.y + 15,
-  right = X + 15,
-  bottom = Y + VELOCITY.y + 16
+  left = PLAYER.x + 1,
+  top = PLAYER.y + PLAYER.vy + 15,
+  right = PLAYER.x + 15,
+  bottom = PLAYER.y + PLAYER.vy + 16
  }
  add_box(box, 4)
  return box
@@ -439,7 +398,7 @@ function check_ground()
  if #gs == 0 then
   return false
  end
- Y = gs[1].top - 16
+ PLAYER.y = gs[1].top - 16
  return true
 end
 
@@ -473,15 +432,15 @@ function check_orbs()
 end
 
 function spawn_tofu()
- DEAD = false
+ PLAYER.is_dead = false
  if SPAWN_ORB then
-  X = SPAWN_ORB.x
-  Y = SPAWN_ORB.y
+  PLAYER.x = SPAWN_ORB.x
+  PLAYER.y = SPAWN_ORB.y
  else
-  X = START.x
-  Y = START.y
+  PLAYER.x = START.x
+  PLAYER.y = START.y
  end
- play_animation(SPR.ORB_COLLECT, X, Y, 7)
+ play_animation(SPR.ORB_COLLECT, PLAYER.x, PLAYER.y, 7)
  sfx(2, "G-3", 60, 3, 8)
  -- Restore enemies
  for _, e in pairs(DEAD_ENEMIES) do
@@ -514,7 +473,7 @@ function respawn()
 end
 
 function tofu_box(nx, ny)
- if DEAD then
+ if PLAYER.is_dead then
   return EMPTY
  end
  if nx == nil then
@@ -524,10 +483,10 @@ function tofu_box(nx, ny)
   ny = 0
  end
  return {
-  left = X + nx + 1,
-  top = Y + 1 + ny,
-  right = X + nx + 15,
-  bottom = Y + ny + 15
+  left = PLAYER.x + nx + 1,
+  top = PLAYER.y + 1 + ny,
+  right = PLAYER.x + nx + 15,
+  bottom = PLAYER.y + ny + 15
  }
 end
 
@@ -553,7 +512,7 @@ function collides(a, b)
 end
 
 function handle_input()
- VELOCITY.x = 0
+ PLAYER.vx = 0
  local run = 0
  if btn(5) then
   ANIM_SPEED = 3
@@ -562,19 +521,19 @@ function handle_input()
   ANIM_SPEED = 7
  end
  if btn(2) then
-  VELOCITY.x = -SPEED - run
+  PLAYER.vx = -SPEED - run
  end
  if btn(3) then
-  VELOCITY.x = SPEED + run
+  PLAYER.vx = SPEED + run
  end
 
  if btnp(4) and can_jump() then
-  VELOCITY.y = JUMP
+  PLAYER.vy = JUMP
  end
 end
 
 function can_jump()
- return ON_GROUND
+ return PLAYER.is_on_ground
 end
 
 function commands(bbox)
@@ -662,8 +621,8 @@ end
 
 function draw()
  cls(1)
- CAM.x = (X // (VIEW.w * 8)) * VIEW.w
- CAM.y = (Y // (VIEW.h * 8)) * VIEW.h
+ CAM.x = (PLAYER.x // (VIEW.w * 8)) * VIEW.w
+ CAM.y = (PLAYER.y // (VIEW.h * 8)) * VIEW.h
  draw_map()
  draw_enemies()
  draw_friend()
@@ -858,25 +817,25 @@ function spawn(id, x, y)
 end
 
 function draw_tofu()
- if DEAD then
+ if PLAYER.is_dead then
   return
  end
  local base = SPR.TOFU_IDLE
- if VELOCITY.x ~= 0 then
+ if PLAYER.vx ~= 0 then
   base = SPR.TOFU_MOVE
  end
- if VELOCITY.y < 0 then
-  DIR = 1
+ if PLAYER.vy < 0 then
+  PLAYER.dir = 1
  end
- if VELOCITY.x > 0 then
-  DIR = 0
+ if PLAYER.vx > 0 then
+  PLAYER.dir = 0
  end
  if MODE == "WIN" then
   base = SPR.TOFU_SMILE
  end
  local frame = (T // ANIM_SPEED) % base.frames
  local sprite = base.id + frame * base.w
- draw_spr(sprite, X, Y, DIR)
+ draw_spr(sprite, PLAYER.x, PLAYER.y, PLAYER.dir)
 end
 
 -- <TILES>
