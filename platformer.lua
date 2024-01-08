@@ -1,7 +1,7 @@
---input: gamepad 
-debug = false
-show_hit_boxes = false
-t=0
+-- input: gamepad
+DEBUG = false
+SHOW_HIT_BOXES = false
+T = 0
 
 CMD = {
  GO_RIGHT = 64,
@@ -11,121 +11,159 @@ CMD = {
  STOP = 80
 }
 
-view = { 
- w=30, h=17
+VIEW = {
+ w = 30,
+ h = 17
 }
 
-start_screen_x = 0
-start_screen_y = 1
+SCREEN = { x = 0, y = 1}
 
 function init()
-	t = 0
-	start_x = 20 + (view.w * start_screen_x * 8)
-	start_y = 60 + (view.h * start_screen_y * 8)
-	spawn_orb = nil
-	lives=3
-	level_time=120
-	time_remaining = level_time
- restore_collected() 
+ T = 0
+ START = { x = 20 + (VIEW.w * SCREEN.x * 8), y = 60 + (VIEW.h * SCREEN.y * 8) }
+ SPAWN_ORB = nil
+ LIVES = 3
+ -- level_time = 120
+ TIME_REMAINING = 120
+ X = START.x
+ Y = START.y
+ restore_collected()
 end
-
-x=start_x
-y=start_y
-cam_x = 0
-cam_y = 0
-
-vx = 0
-vy = 0
-max_vy = 4
-dir = 0
-dead = false
-on_ground = false
-speed = 1.1
-run_speed = .5
-gravity = .3
-jump_power = -4.6
-short_bounce = -3
-high_bounce = -5.2
-jump_frames = 0
-collected = {}
-
-anim_speed = 7
-
-hit_boxes = {}
-ground = {}
-spikes = {}
-orbs = {}
-enemies = {}
-dead_enemies = {}
-friend = nil
-
+CAM = { x = 0, y = 0 }
+VELOCITY = { x = 0, y = 0, max_y = 4 }
+DIR = 0
+DEAD = false
+ON_GROUND = false
+SPEED = 1.1
+RUN = .5
+GRAVITY = .3
+JUMP = -4.6
+BOUNCE = { short = -3, high = -5.2 }
+COLLECTED = {}
+ANIM_SPEED = 7
+HIT_BOXES = {}
+GROUND = {}
+SPIKES = {}
+ORBS = {}
+ENEMIES = {}
+DEAD_ENEMIES = {}
+FRIEND = nil
 SPR = {
- TOFU_IDLE = {id=288, frames=1, w=2},
- TOFU_MOVE = {id=290, frames=4, w=2},
- TOFU_DEATH = {id=320, frames=2, w=2},
- TOFU_SMILE = {id=298, frames=1, w=2},
- TOFU_FRIEND = {id=300, frames=1, w=2},
- FRIEND_SMILE = {id=302, frames=1, w=2},
- ORB = { id=448, frames=4, w=2 },
- ORB_COLLECT = { id=416, frames=4, w=2 },
- ENEMY_IDLE = {id=352, frames=1, w=2},
- ENEMY_MOVE = {id=354, frames=4, w=2},
- ENEMY_DEATH = {id=384, frames=2, w=2},
+ TOFU_IDLE = {
+  id = 288,
+  frames = 1,
+  w = 2
+ },
+ TOFU_MOVE = {
+  id = 290,
+  frames = 4,
+  w = 2
+ },
+ TOFU_DEATH = {
+  id = 320,
+  frames = 2,
+  w = 2
+ },
+ TOFU_SMILE = {
+  id = 298,
+  frames = 1,
+  w = 2
+ },
+ TOFU_FRIEND = {
+  id = 300,
+  frames = 1,
+  w = 2
+ },
+ FRIEND_SMILE = {
+  id = 302,
+  frames = 1,
+  w = 2
+ },
+ ORB = {
+  id = 448,
+  frames = 4,
+  w = 2
+ },
+ ORB_COLLECT = {
+  id = 416,
+  frames = 4,
+  w = 2
+ },
+ ENEMY_IDLE = {
+  id = 352,
+  frames = 1,
+  w = 2
+ },
+ ENEMY_MOVE = {
+  id = 354,
+  frames = 4,
+  w = 2
+ },
+ ENEMY_DEATH = {
+  id = 384,
+  frames = 2,
+  w = 2
+ }
 }
 
 ANIMS = {}
 WAIT = {}
-EMPTY = { left = 0, right = 0, top = 0, bottom = 0 }
+EMPTY = {
+ left = 0,
+ right = 0,
+ top = 0,
+ bottom = 0
+}
 
 SLOW_D = 1
 SLOW_T = 1
 
-MODE="TITLE"
-game_over_t = 0
-win_t = 0
+MODE = "TITLE"
+GAME_OVER_T = 0
+WIN_T = 0
 
 TRACK = nil
 CURRENTLY_PLAYING = nil
 
 function TIC()
- if TRACK ~= CURRENTLY_PLAYING then 
+ if TRACK ~= CURRENTLY_PLAYING then
   music(TRACK)
-  CURRENTLY_PLAYING =TRACK
+  CURRENTLY_PLAYING = TRACK
  end
-	if MODE == "PLAY" then
-	 PLAY()
-	elseif MODE == "TITLE" then
-	 TITLE()
-	elseif MODE == "GAMEOVER" then
-	 GAMEOVER()
-	elseif MODE == "WIN" then
-	 WINSCREEN()
-	end
-	if debug then
-	 debug_text()
-	end
-	t=t+1
+ if MODE == "PLAY" then
+  PLAY()
+ elseif MODE == "TITLE" then
+  TITLE()
+ elseif MODE == "GAMEOVER" then
+  GAMEOVER()
+ elseif MODE == "WIN" then
+  WINSCREEN()
+ end
+ if DEBUG then
+  debug_text()
+ end
+ T = T + 1
 end
 
 function WINSCREEN()
- TRACK=0
+ TRACK = 0
  do_wait()
--- vx=1
-	update()
-	draw()
-	draw_win()
+ -- vx=1
+ update()
+ draw()
+ draw_win()
 end
 
 function draw_win()
- offy = math.min(0, -136 + win_t)
-	map(210, 68, 30, 17, 0, offy, 1)
-	win_t = win_t + 1
-	if btnp(4) then 
-	 if win_t < 136 + 16 then
-		 win_t = 136 + 16
-		else
-		   MODE = "TITLE" 
-		end
+ local offy = math.min(0, -136 + WIN_T)
+ map(210, 68, 30, 17, 0, offy, 1)
+ WIN_T = WIN_T + 1
+ if btnp(4) then
+  if WIN_T < 136 + 16 then
+   WIN_T = 136 + 16
+  else
+   MODE = "TITLE"
+  end
  end
 end
 
@@ -136,10 +174,10 @@ function TITLE()
  if SHOW_MENU then
   draw_menu()
  else
-  if t % 60 < 30 then
+  if T % 60 < 30 then
    print("-= Press JUMP to play =-", 55, 110, 12)
   end
-  if btnp(4) and not SHOW_MENU then 
+  if btnp(4) and not SHOW_MENU then
    SHOW_MENU = true
   end
  end
@@ -148,80 +186,76 @@ end
 SELECTED = 1
 
 function draw_menu()
- map(210, 85, view.w, view.h, 0, 0, 1)
+ map(210, 85, VIEW.w, VIEW.h, 0, 0, 1)
  print("STAGE SELECT", 86, 43, 12)
 
-	if btnp(2) or btnp(3) then 
-	 SELECTED = (SELECTED + 1) % 2
-	end
-	
-	if btnp(4) then
-  start_screen_y = SELECTED
-  MODE = "PLAY" 
+ if btnp(2) or btnp(3) then
+  SELECTED = (SELECTED + 1) % 2
+ end
+
+ if btnp(4) then
+  SCREEN.y = SELECTED
+  MODE = "PLAY"
   init()
   spawn_tofu()
   SHOW_MENU = false
-	end
+ end
 
- if SELECTED == 1 and t % 60 < 30 then
+ if SELECTED == 1 and T % 60 < 30 then
   print("HARD", 135, 60, 12)
  else
   print("EASY", 75, 60, 12)
  end
- 
- if SELECTED == 0 and t % 60 < 30 then
+
+ if SELECTED == 0 and T % 60 < 30 then
   print("EASY", 75, 60, 12)
  else
   print("HARD", 135, 60, 12)
  end
- 
 end
 
 function anim_title(id, x, y)
- if id == 192 or id == 193 or
-    id == 208 or id == 209 then
-  off = ((t // 15) % 4) * 2
+ if id == 192 or id == 193 or id == 208 or id == 209 then
+  off = ((T // 15) % 4) * 2
   return id + off
-	end
+ end
  return id
- 
 end
 
 function GAMEOVER()
-	cls(1)
-	TRACK=3
+ cls(1)
+ TRACK = 3
  do_wait()
-	update()
-	draw()
- offy = math.min(16, -136 + game_over_t)
-	map(210, 34, 30, 17, 0, offy, 1)
-	game_over_t = game_over_t + 1
-	if btnp(4) then 
-	 if game_over_t < 136 + 16 then
-		 game_over_t = 136 + 16
-		else
-		   MODE = "TITLE" 
-		end
+ update()
+ draw()
+ offy = math.min(16, -136 + GAME_OVER_T)
+ map(210, 34, 30, 17, 0, offy, 1)
+ GAME_OVER_T = GAME_OVER_T + 1
+ if btnp(4) then
+  if GAME_OVER_T < 136 + 16 then
+   GAME_OVER_T = 136 + 16
+  else
+   MODE = "TITLE"
+  end
  end
 end
 
 function PLAY()
  TRACK = 1
-	handle_input()
- SLOW_T = SLOW_T+1
- if SLOW_T % SLOW_D ~=0 then
+ handle_input()
+ SLOW_T = SLOW_T + 1
+ if SLOW_T % SLOW_D ~= 0 then
   return
  end
  do_wait()
-	update()
-	draw()
-	jump_frames = jump_frames - 1
+ update()
+ draw()
 end
 
 function do_wait()
  local keep = {}
  for _, wait in ipairs(WAIT) do
-  if t > wait.t then
+  if T > wait.t then
    wait.act()
   else
    table.insert(keep, wait)
@@ -231,46 +265,53 @@ function do_wait()
 end
 
 function play_animation(sprite, x, y, speed)
-	local anim = { sprite=sprite, x=x, y=y, speed=speed, t=t }
-	table.insert(ANIMS, anim)
+ local anim = {
+  sprite = sprite,
+  x = x,
+  y = y,
+  speed = speed,
+  t = T
+ }
+ table.insert(ANIMS, anim)
 end
 
 function update()
- if t % 60 == 0 and MODE == "PLAY" then 
-  time_remaining = math.max(0, time_remaining - 1)
+ if T % 60 == 0 and MODE == "PLAY" then
+  TIME_REMAINING = math.max(0, TIME_REMAINING - 1)
  end
- if time_remaining == 0 and not dead then
-  lives = 0
+ if TIME_REMAINING == 0 and not DEAD then
+  LIVES = 0
   die()
   return
  end
- hit_boxes = {}
+ HIT_BOXES = {}
  update_enemies()
-	update_position()
-	check_orbs()
+ update_position()
+ check_orbs()
 
-
-	if hit_spike() or hit_enemy() then
-	 die()
-	else
-		check_win()
-	end
+ if hit_spike() or hit_enemy() then
+  die()
+ else
+  check_win()
+ end
 end
 
 function check_win()
- if friend == nil then return end
- box = bbox(friend.x, friend.y)
+ if FRIEND == nil then
+  return
+ end
+ local box = bbox(FRIEND.x, FRIEND.y)
  add_box(box, 7)
  if collides(tofu_box(), box) and MODE ~= "WIN" then
   MODE = "WIN"
-  win_t = 0
+  WIN_T = 0
  end
 end
 
 function hit_enemy()
- pbox = tofu_box()
- for _, enm in ipairs(enemies) do
-  box = bbox(enm.x + 2, enm.y + 2, 12, 12)  
+ local pbox = tofu_box()
+ for _, enm in ipairs(ENEMIES) do
+  local box = bbox(enm.x + 2, enm.y + 2, 12, 12)
   add_box(box, 7)
   if collides(box, pbox) then
    return true
@@ -280,174 +321,192 @@ function hit_enemy()
 end
 
 function die()
-	 play_animation(SPR.TOFU_DEATH, x, y, 30)
-		--sfx(1, "C-5", 60, 0, 8)
-		sfx(1, "D#5", 60, 3, 8)		
-		dead = true
-	 wait(120, respawn)
+ play_animation(SPR.TOFU_DEATH, X, Y, 30)
+ -- sfx(1, "C-5", 60, 0, 8)
+ sfx(1, "D#5", 60, 3, 8)
+ DEAD = true
+ wait(120, respawn)
 end
 
 function update_enemies()
  local keep = {}
  local tofu_foot = tofu_ground_collider()
- for _, enm in ipairs(enemies) do
-  local box = bbox(enm.x, enm.y) 
-  local head = bbox(enm.x, enm.y-1, 16, 4)
+ for _, enm in ipairs(ENEMIES) do
+  local box = bbox(enm.x, enm.y)
+  local head = bbox(enm.x, enm.y - 1, 16, 4)
   add_box(head, 7)
   if collides(head, tofu_foot) then
-   table.insert(dead_enemies, enm)
+   table.insert(DEAD_ENEMIES, enm)
    play_animation(SPR.ENEMY_DEATH, enm.x, enm.y, 30)
-   bounce = short_bounce
-   if btn(4) then bounce = high_bounce end
-   vy = bounce
+   local bounce = BOUNCE.short
+   if btn(4) then
+    bounce = BOUNCE.high
+   end
+   VELOCITY.y = bounce
    sfx(3, "C-3", 30, 3, 8)
-   --sfx(3, "G-3", 30, 0, 8)
-  elseif not on_screen(box) then 
+   -- sfx(3, "G-3", 30, 0, 8)
+  elseif not on_screen(box) then
    unspawn(enm)
   else
    table.insert(keep, enm)
-	  cmds = commands(box)
-	  for cmd, _ in pairs(cmds) do
-	   if cmd == CMD.STOP then
-	    enm.vx=0
-	   end
-				if cmd == CMD.SLOW then
-		   enm.speed = 0.5
-		  end
-		  if cmd == CMD.FAST then
-		   enm.speed = 2
-		  end
-		  if cmd == CMD.GO_LEFT then
-		   enm.vx = -1
-		  end
-		  if cmd == CMD.GO_RIGHT then
-		   enm.vx = 1
-		  end
-	  end
-	  enm.x = enm.x + enm.vx*enm.speed
-			add_box(box, 5)
-	 end
+   local cmds = commands(box)
+   for cmd, _ in pairs(cmds) do
+    if cmd == CMD.STOP then
+     enm.vx = 0
+    end
+    if cmd == CMD.SLOW then
+     enm.speed = 0.5
+    end
+    if cmd == CMD.FAST then
+     enm.speed = 2
+    end
+    if cmd == CMD.GO_LEFT then
+     enm.vx = -1
+    end
+    if cmd == CMD.GO_RIGHT then
+     enm.vx = 1
+    end
+   end
+   enm.x = enm.x + enm.vx * enm.speed
+   add_box(box, 5)
+  end
  end
- enemies = keep
+ ENEMIES = keep
 end
 
 function on_screen(box)
- screen = bbox(cam_x*8, cam_y*8, 240, 136)
+ local screen = bbox(CAM.x * 8, CAM.y * 8, 240, 136)
  return collides(box, screen)
 end
 
 function bbox(x, y, w, h)
- if w == nil then w = 16 end
- if h == nil then h = 16 end
- return {left=x, right=x+w, top=y, bottom=y+h}
+ if w == nil then
+  w = 16
+ end
+ if h == nil then
+  h = 16
+ end
+ return {
+  left = x,
+  right = x + w,
+  top = y,
+  bottom = y + h
+ }
 end
 
 function wait(frames, act)
- table.insert(WAIT, { t=t+frames, act=act })
+ table.insert(WAIT, {
+  t = T + frames,
+  act = act
+ })
 end
 
 function update_position()
- on_ground = check_ground()
- if on_ground then
-  math.floor(y)
+ ON_GROUND = check_ground()
+ if ON_GROUND then
+  math.floor(Y)
  else
-  vy = math.min(max_vy, vy + gravity)
- end
- 
-	if can_move(vx, 0) then
-			x = x + vx	
-	else
-	  vx = 0
+  VELOCITY.y = math.min(VELOCITY.max_y, VELOCITY.y + GRAVITY)
  end
 
-	if can_move(0, vy) then
-		y = y + vy
-	else
-	 vy = 0
-	end
+ if can_move(VELOCITY.x, 0) then
+  X = X + VELOCITY.x
+ else
+  VELOCITY.x = 0
+ end
+
+ if can_move(0, VELOCITY.y) then
+  Y = Y + VELOCITY.y
+ else
+  VELOCITY.y = 0
+ end
 end
 
 function tofu_ground_collider()
  local box = {
-	 left = x + 1, top = y + vy + 15,
-		right = x + 15, bottom = y + vy + 16
-	}
-	add_box(box, 4)
-	return box
+  left = X + 1,
+  top = Y + VELOCITY.y + 15,
+  right = X + 15,
+  bottom = Y + VELOCITY.y + 16
+ }
+ add_box(box, 4)
+ return box
 end
 
 function check_ground()
- box = tofu_ground_collider()
-	gs = find_tags(box, 0, 2)
-	if #gs == 0 then return false end
-	y = gs[1].top-16
+ local box = tofu_ground_collider()
+ local gs = find_tags(box, 0, 2)
+ if #gs == 0 then
+  return false
+ end
+ Y = gs[1].top - 16
  return true
 end
 
 function can_move(nx, ny)
  local box = tofu_box(nx, ny)
-	add_box(box, 3)
+ add_box(box, 3)
  return not in_ground(box)
 end
 
 function check_orbs()
  local box = tofu_box()
-	local keep = {}
- for _, orb in ipairs(orbs) do
+ local keep = {}
+ for _, orb in ipairs(ORBS) do
   add_box(orb, 5)
-	 if collides(box, orb) then		 
-		 table.insert(collected, {item=orb, id=192, x=orb.x//8, y=orb.y//8})
-			spawn_orb = orb			
-			--sfx(0, 'C-6', 60, 0, 8)
-			--sfx(0, 'C#6', 60, 1, 8)
-			sfx(0, 'D-6', 60, 3, 8)
-			play_animation(SPR.ORB_COLLECT, orb.x, orb.y, 7)
-			lives = lives + 1
-		else
-		 table.insert(keep, orb)
-		end
+  if collides(box, orb) then
+   table.insert(COLLECTED, {
+    item = orb,
+    id = 192,
+    x = orb.x // 8,
+    y = orb.y // 8
+   })
+   SPAWN_ORB = orb
+   sfx(0, 'D-6', 60, 3, 8)
+   play_animation(SPR.ORB_COLLECT, orb.x, orb.y, 7)
+   LIVES = LIVES + 1
+  else
+   table.insert(keep, orb)
+  end
  end
- orbs = keep
+ ORBS = keep
 end
 
 function spawn_tofu()
- dead = false
- if spawn_orb then
-  x = spawn_orb.x
-  y = spawn_orb.y
+ DEAD = false
+ if SPAWN_ORB then
+  X = SPAWN_ORB.x
+  Y = SPAWN_ORB.y
  else
-  x = start_x
-  y = start_y 
+  X = START.x
+  Y = START.y
  end
- play_animation(SPR.ORB_COLLECT, x, y, 7)
-	--sfx(2, "C-5", 60, 0, 8)
-	--sfx(2, "E-4", 60, 1, 8)
-	sfx(2, "G-3", 60, 3, 8)
-	-- Restore enemies
-	for _,e in pairs(dead_enemies) do
-	 unspawn(e)
-	end
-	dead_enemies = {}
-	restore_collected()
+ play_animation(SPR.ORB_COLLECT, X, Y, 7)
+ sfx(2, "G-3", 60, 3, 8)
+ -- Restore enemies
+ for _, e in pairs(DEAD_ENEMIES) do
+  unspawn(e)
+ end
+ DEAD_ENEMIES = {}
+ restore_collected()
 end
 
 function restore_collected()
  -- Restore collected items
  local keep = {}
- for _,c in ipairs(collected) do
-	 if spawn_orb ~= c.item then
+ for _, c in ipairs(COLLECTED) do
+  if SPAWN_ORB ~= c.item then
    mset(c.x, c.y, c.id)
   else
    table.insert(keep, c)
   end
- end 
- collected = keep
+ end
+ COLLECTED = keep
 end
 
-
 function respawn()
- lives = math.max(0, lives - 1)
- if lives == 0 then
+ LIVES = math.max(0, LIVES - 1)
+ if LIVES == 0 then
   MODE = "GAMEOVER"
   return
  end
@@ -455,72 +514,80 @@ function respawn()
 end
 
 function tofu_box(nx, ny)
- if dead then return EMPTY end
- if nx == nil then nx = 0 end
- if ny == nil then ny = 0 end
- return { left = x + nx + 1, top = y + 1 + ny,	right = x + nx + 15, bottom = y + ny + 15 }
+ if DEAD then
+  return EMPTY
+ end
+ if nx == nil then
+  nx = 0
+ end
+ if ny == nil then
+  ny = 0
+ end
+ return {
+  left = X + nx + 1,
+  top = Y + 1 + ny,
+  right = X + nx + 15,
+  bottom = Y + ny + 15
+ }
 end
 
 function hit_spike()
- spikes = find_tags(tofu_box(), 1)
- return #spikes > 0
+ SPIKES = find_tags(tofu_box(), 1)
+ return #SPIKES > 0
 end
 
 function collides(a, b)
+ if a.left == a.right or a.top == a.bottom or b.left == b.right or b.top == b.bottom then
+  return false
+ end
 
-	if a.left == a.right or
-	   a.top == a.bottom or
-				b.left == b.right or
-				b.top == b.bottom then
-	 return false
-	end
- 
- if a.left > b.right or
-    b.left > a.right then
+ if a.left > b.right or b.left > a.right then
   return false
  end
- 
- if a.top > b.bottom or
-    b.top > a.bottom then
+
+ if a.top > b.bottom or b.top > a.bottom then
   return false
  end
- 
+
  return true
 end
 
 function handle_input()
- vx = 0
- run = 0
- if btn(5) then 
-	 anim_speed = 3 
-  run = run_speed
-		else 
-		anim_speed = 7 
-	end
-	if btn(2) then vx=-speed-run end
-	if btn(3) then vx=speed+run end
+ VELOCITY.x = 0
+ local run = 0
+ if btn(5) then
+  ANIM_SPEED = 3
+  run = RUN
+ else
+  ANIM_SPEED = 7
+ end
+ if btn(2) then
+  VELOCITY.x = -SPEED - run
+ end
+ if btn(3) then
+  VELOCITY.x = SPEED + run
+ end
 
-	if btnp(4) and can_jump() then 
-	 vy=jump_power
-	end
-	
+ if btnp(4) and can_jump() then
+  VELOCITY.y = JUMP
+ end
 end
 
 function can_jump()
- return on_ground or jump_frames > 0
+ return ON_GROUND
 end
 
-function commands(bbox) 
- found = {}
- left = bbox.left//8
- right = bbox.right//8
- top = bbox.top//8
- bottom = bbox.bottom//8
- for cx=left,right do
-  for cy=top,bottom do
-   id = mget(cx, cy)
+function commands(bbox)
+ local found = {}
+ local left = bbox.left // 8
+ local right = bbox.right // 8
+ local top = bbox.top // 8
+ local bottom = bbox.bottom // 8
+ for cx = left, right do
+  for cy = top, bottom do
+   local id = mget(cx, cy)
    if fget(id, 5) then
-				found[id] = true
+    found[id] = true
    end
   end
  end
@@ -528,15 +595,15 @@ function commands(bbox)
 end
 
 function has_flag(bbox, flag)
- left = bbox.left//8
- right = bbox.right//8
- top = bbox.top//8
- bottom = bbox.bottom//8
- for cx=left,right do
-  for cy=top,bottom do
-   id = mget(cx, cy)
+ local left = bbox.left // 8
+ local right = bbox.right // 8
+ local top = bbox.top // 8
+ local bottom = bbox.bottom // 8
+ for cx = left, right do
+  for cy = top, bottom do
+   local id = mget(cx, cy)
    if fget(id, flag) then
-				return id
+    return id
    end
   end
  end
@@ -544,34 +611,42 @@ function has_flag(bbox, flag)
 end
 
 function find_tags(bbox, tag, show)
- found ={}
- left = bbox.left//8
- right = bbox.right//8
- top = bbox.top//8
- bottom = bbox.bottom//8
- for cx=left,right do
-  for cy=top,bottom do
-   id = mget(cx, cy)
+ local found = {}
+ local left = bbox.left // 8
+ local right = bbox.right // 8
+ local top = bbox.top // 8
+ local bottom = bbox.bottom // 8
+ for cx = left, right do
+  for cy = top, bottom do
+   local id = mget(cx, cy)
    if fget(id, tag) then
-	   box = { left = cx*8, top = cy*8, right = (cx+1)*8, bottom = (cy+1)*8 }    
-				table.insert(found, box)
+    local box = {
+     left = cx * 8,
+     top = cy * 8,
+     right = (cx + 1) * 8,
+     bottom = (cy + 1) * 8
+    }
+    table.insert(found, box)
    end
   end
  end
- if show then add_boxes(found, show) end
+ if show then
+  add_boxes(found, show)
+ end
  return found
 end
 
 function add_box(bbox, color)
- if not show_hit_boxes then return end
- if bbox.left == nil or
-    bbox.right == nil or
-    bbox.top == nil or
-    bbox.bottom == nil 
- then
+ if not SHOW_HIT_BOXES then
+  return
+ end
+ if bbox.left == nil or bbox.right == nil or bbox.top == nil or bbox.bottom == nil then
   error("Invalid bbox!")
  end
- table.insert(hit_boxes, {box=bbox, color=color})
+ table.insert(HIT_BOXES, {
+  box = bbox,
+  color = color
+ })
 end
 
 function add_boxes(arr, color)
@@ -581,16 +656,15 @@ function add_boxes(arr, color)
 end
 
 function in_ground(bbox)
- gs = find_tags(bbox, 0, 2)
+ local gs = find_tags(bbox, 0, 2)
  return #gs > 0
 end
 
-
 function draw()
  cls(1)
- cam_x = (x // (view.w*8)) * view.w
- cam_y = (y // (view.h*8)) * view.h
-	draw_map()
+ CAM.x = (X // (VIEW.w * 8)) * VIEW.w
+ CAM.y = (Y // (VIEW.h * 8)) * VIEW.h
+ draw_map()
  draw_enemies()
  draw_friend()
  draw_tofu()
@@ -598,28 +672,29 @@ function draw()
  draw_animations()
  draw_hit_boxes()
  draw_overlay()
-	debug_text()
+ debug_text()
 end
 
 function draw_friend()
- if friend == nil then return end
- sprite = SPR.TOFU_FRIEND.id
- if MODE == "WIN" then  
+ if FRIEND == nil then
+  return
+ end
+ local sprite = SPR.TOFU_FRIEND.id
+ if MODE == "WIN" then
   sprite = SPR.FRIEND_SMILE.id
  end
- draw_spr(sprite, friend.x, friend.y)
+ draw_spr(sprite, FRIEND.x, FRIEND.y)
 end
 
 function draw_overlay()
  map(210, 0, 30, 3, 0, 0, 1, 1, anim_overlay)
- print(lives, 14, 1, 12)
- print(time_remaining, 240-24, 1, 12)
+ print(LIVES, 14, 1, 12)
+ print(TIME_REMAINING, 240 - 24, 1, 12)
 end
-
 
 function anim_overlay(id, x, y)
  if id == 225 then
-  off = 7 - ((t // 60) % 8)
+  local off = 7 - ((T // 60) % 8)
   return id + off
  end
  return id
@@ -627,12 +702,16 @@ end
 
 function draw_enemies()
  local sp = SPR.ENEMY_MOVE
- local off = (t // 7) % sp.frames
- for _, enm in ipairs(enemies) do
-  local id = sp.id + off*sp.w
-  if enm.vx == 0 then id = SPR.ENEMY_IDLE.id end
+ local off = (T // 7) % sp.frames
+ for _, enm in ipairs(ENEMIES) do
+  local id = sp.id + off * sp.w
+  if enm.vx == 0 then
+   id = SPR.ENEMY_IDLE.id
+  end
   local flip = 0
-  if enm.vx > 0 then flip = 1 end
+  if enm.vx > 0 then
+   flip = 1
+  end
   draw_spr(id, enm.x, enm.y, flip)
  end
 end
@@ -640,11 +719,11 @@ end
 function draw_animations()
  local keep = {}
  for _, a in ipairs(ANIMS) do
-  local ticks = t - a.t
+  local ticks = T - a.t
   local offset = (ticks // a.speed)
   if offset < a.sprite.frames then
-	  local id = a.sprite.id + offset*a.sprite.w
-			draw_spr(id, a.x, a.y)
+   local id = a.sprite.id + offset * a.sprite.w
+   draw_spr(id, a.x, a.y)
    table.insert(keep, a)
   end
  end
@@ -652,114 +731,154 @@ function draw_animations()
 end
 
 function draw_orbs()
- for _, orb in ipairs(orbs) do
+ for _, orb in ipairs(ORBS) do
   draw_orb(orb.x, orb.y)
  end
 end
 
 function draw_orb(x, y)
- base = SPR.ORB
- frame = (t // 15) % base.frames
- sprite = base.id + frame * base.w
+ local base = SPR.ORB
+ local frame = (T // 15) % base.frames
+ local sprite = base.id + frame * base.w
  draw_spr(sprite, x, y)
 end
 
 function draw_spr(id, x, y, f, w, h, m)
- if w == nil then w = 2 end
- if h == nil then h = 2 end
- if f == nil then f = 0 end
- if m == nil then m = 6 end
- spr(id, x - cam_x*8, y - cam_y*8, m, 1, f, 0, w, h) 
+ if w == nil then
+  w = 2
+ end
+ if h == nil then
+  h = 2
+ end
+ if f == nil then
+  f = 0
+ end
+ if m == nil then
+  m = 6
+ end
+ spr(id, x - CAM.x * 8, y - CAM.y * 8, m, 1, f, 0, w, h)
 end
 
 function debug_text()
- if not debug then return end
+ if not DEBUG then
+  return
+ end
  print(MODE, 0, 8, 12)
- print(win_t, 0, 16, 12)
+ print(WIN_T, 0, 16, 12)
 end
 
 function draw_hit_boxes()
- if not show_hit_boxes then return end
- offx = cam_x * 8
- offy = cam_y * 8
+ if not SHOW_HIT_BOXES then
+  return
+ end
+ local offx = CAM.x * 8
+ local offy = CAM.y * 8
 
-	for _, b in ipairs(hit_boxes) do
-	 box = b.box
-		color = b.color
-	 rectb(box.left - offx, box.top, box.right - box.left, box.bottom - box.top, color)
-	end
+ for _, b in ipairs(HIT_BOXES) do
+  local box = b.box
+  local color = b.color
+  rectb(box.left - offx, box.top, box.right - box.left, box.bottom - box.top, color)
+ end
 end
 
 function draw_map()
  update_orbs()
- map(cam_x, cam_y, 
-     view.w, view.h, 
-     0, 0, 0, 1, remap)
+ map(CAM.x, CAM.y, VIEW.w, VIEW.h, 0, 0, 0, 1, remap)
 end
 
 function update_orbs()
  keep = {}
- screen = { 
-  left = cam_x * 8, 
-  top = cam_y * 8,
-  right = cam_x * 8 + 240, 
-  bottom = cam_y * 8 + 136
+ screen = {
+  left = CAM.x * 8,
+  top = CAM.y * 8,
+  right = CAM.x * 8 + 240,
+  bottom = CAM.y * 8 + 136
  }
- for _, orb in ipairs(orbs) do
-		if collides(orb, screen) then
-		 table.insert(keep, orb)
-		else
-		 mset(orb.x//8, orb.y//8, 192)
-		end
+ for _, orb in ipairs(ORBS) do
+  if collides(orb, screen) then
+   table.insert(keep, orb)
+  else
+   mset(orb.x // 8, orb.y // 8, 192)
+  end
  end
- orbs = keep
+ ORBS = keep
 end
 
 function remap(id, x, y)
- if fget(id, 5) then 
-  return 0 
+ if fget(id, 5) then
+  return 0
  end
  if fget(id, 7) then
   spawn(id + 256, x, y)
  end
- if fget(id, 6) then 
-   mset(x, y, 0)
-   return 0 
+ if fget(id, 6) then
+  mset(x, y, 0)
+  return 0
  end
  return id
 end
 
 function unspawn(enm)
- play_animation(SPR.ORB_COLLECT, enm.mx*8, enm.my*8, 7)
- wait(7*3, function () mset(enm.mx, enm.my, enm.mid) end)
-
+ play_animation(SPR.ORB_COLLECT, enm.mx * 8, enm.my * 8, 7)
+ wait(7 * 3, function()
+  mset(enm.mx, enm.my, enm.mid)
+ end)
 end
 
 function spawn(id, x, y)
-	if id == SPR.ORB.id then
-	 table.insert(orbs, 
-		 {x = x * 8, y = y * 8, 
-			left = (x * 8) + 4, top = (y * 8) + 4, 
-			bottom = ((y+2)*8) - 4, right = ((x+2)*8) - 4})
-	elseif id == SPR.ENEMY_IDLE.id then
-	 table.insert(enemies,
-		 {x = x * 8, y = y * 8, mx=x, my=y, vx=-1, mid=96, vy=0, speed=0.5})
-	elseif id == SPR.TOFU_FRIEND.id then
-  friend = { x = x * 8, y = y * 8, mx=x, my=y, mid=44}
-	end 
+ if id == SPR.ORB.id then
+  table.insert(ORBS, {
+   x = x * 8,
+   y = y * 8,
+   left = (x * 8) + 4,
+   top = (y * 8) + 4,
+   bottom = ((y + 2) * 8) - 4,
+   right = ((x + 2) * 8) - 4
+  })
+ elseif id == SPR.ENEMY_IDLE.id then
+  table.insert(ENEMIES, {
+   x = x * 8,
+   y = y * 8,
+   mx = x,
+   my = y,
+   vx = -1,
+   mid = 96,
+   vy = 0,
+   speed = 0.5
+  })
+ elseif id == SPR.TOFU_FRIEND.id then
+  FRIEND = {
+   x = x * 8,
+   y = y * 8,
+   mx = x,
+   my = y,
+   mid = 44
+  }
+ end
 end
 
 function draw_tofu()
- if dead then return end
- base = SPR.TOFU_IDLE
- if vx ~= 0 then base = SPR.TOFU_MOVE end
- if vx < 0 then dir = 1 end
- if vx > 0 then dir = 0 end
- if MODE == "WIN" then base = SPR.TOFU_SMILE end
- frame = (t // anim_speed) % base.frames
- sprite = base.id + frame * base.w
- draw_spr(sprite, x, y, dir)
+ if DEAD then
+  return
+ end
+ local base = SPR.TOFU_IDLE
+ if VELOCITY.x ~= 0 then
+  base = SPR.TOFU_MOVE
+ end
+ if VELOCITY.y < 0 then
+  DIR = 1
+ end
+ if VELOCITY.x > 0 then
+  DIR = 0
+ end
+ if MODE == "WIN" then
+  base = SPR.TOFU_SMILE
+ end
+ local frame = (T // ANIM_SPEED) % base.frames
+ local sprite = base.id + frame * base.w
+ draw_spr(sprite, X, Y, DIR)
 end
+
 -- <TILES>
 -- 000:1111111111111111111111111111111111111111111111111111111111111111
 -- 002:6666666666666666f666666fff6666ff9ff66ff999ffff99999ff99989999998
