@@ -1,7 +1,7 @@
--- input: gamepad
-DEBUG = false
-SHOW_HIT_BOXES = false
-T = 0
+--input: gamepad
+debug = false
+show_hit_boxes = false
+t=0
 
 CMD = {
  GO_RIGHT = 64,
@@ -11,118 +11,155 @@ CMD = {
  STOP = 80
 }
 
-VIEW = {
- w = 30,
- h = 17
+view = {
+ w=30, h=17
 }
 
-SCREEN = { x = 0, y = 1 }
-PLAYER = {
- x = 0,
- y = 0,
- vx = 0,
- vy = 0,
- dir = 0,
- is_dead = false,
- is_on_ground = false
-}
-CAM = { x = 0, y = 0 }
-MAX_VY = 4
+start_screen_x = 0
+start_screen_y = 1
 
-SPEED = 1.1
-RUN = .5
-GRAVITY = .3
-JUMP = -4.6
-ANIM_SPEED = 7
-FRIEND = nil
+function init()
+	t = 0
+	start_x = 20 + (view.w * start_screen_x * 8)
+	start_y = 60 + (view.h * start_screen_y * 8)
+	spawn_orb = nil
+	lives=3
+	level_time=120
+	time_remaining = level_time
+ restore_collected()
+end
 
-BOUNCE = { short = -3, high = -5.2 }
-COLLECTED = {}
-HIT_BOXES = {}
-GROUND = {}
-SPIKES = {}
-ORBS = {}
-ENEMIES = {}
-DEAD_ENEMIES = {}
+x=start_x
+y=start_y
+cam_x = 0
+cam_y = 0
+
+vx = 0
+vy = 0
+max_vy = 4
+dir = 0
+dead = false
+on_ground = false
+speed = 1.1
+run_speed = .5
+gravity = .3
+jump_power = -4.6
+short_bounce = -3
+high_bounce = -5.2
+jump_frames = 0
+collected = {}
+
+anim_speed = 7
+
+hit_boxes = {}
+ground = {}
+spikes = {}
+orbs = {}
+enemies = {}
+dead_enemies = {}
+friend = nil
+
 SPR = {
- TOFU_IDLE = { id = 288, frames = 1, w = 2 },
- TOFU_MOVE = { id = 290, frames = 4, w = 2 },
- TOFU_DEATH = { id = 320, frames = 2, w = 2 },
- TOFU_SMILE = { id = 298, frames = 1, w = 2 },
- TOFU_FRIEND = { id = 300, frames = 1, w = 2 },
- FRIEND_SMILE = { id = 302, frames = 1, w = 2 },
- ORB = { id = 448, frames = 4, w = 2 },
- ORB_COLLECT = { id = 416, frames = 4, w = 2 },
- ENEMY_IDLE = { id = 352, frames = 1, w = 2 },
- ENEMY_MOVE = { id = 354, frames = 4, w = 2 },
- ENEMY_DEATH = { id = 384, frames = 2, w = 2 }
+ TOFU_IDLE = {id=288, frames=1, w=2},
+ TOFU_MOVE = {id=290, frames=4, w=2},
+ TOFU_DEATH = {id=320, frames=2, w=2},
+ TOFU_SMILE = {id=298, frames=1, w=2},
+ TOFU_FRIEND = {id=300, frames=1, w=2},
+ FRIEND_SMILE = {id=302, frames=1, w=2},
+ ORB = { id=448, frames=4, w=2 },
+ ORB_COLLECT = { id=416, frames=4, w=2 },
+ ENEMY_IDLE = {id=352, frames=1, w=2},
+ ENEMY_MOVE = {id=354, frames=4, w=2},
+ ENEMY_DEATH = {id=384, frames=2, w=2},
 }
+
 ANIMS = {}
 WAIT = {}
-EMPTY = {
- left = 0,
- right = 0,
- top = 0,
- bottom = 0
-}
+EMPTY = { left = 0, right = 0, top = 0, bottom = 0 }
+
 SLOW_D = 1
 SLOW_T = 1
-MODE = "TITLE"
-GAME_OVER_T = 0
-WIN_T = 0
+
+MODE="CONTROLS"
+game_over_t = 0
+win_t = 0
+
 TRACK = nil
 CURRENTLY_PLAYING = nil
 
 function TIC()
  if TRACK ~= CURRENTLY_PLAYING then
   music(TRACK)
-  CURRENTLY_PLAYING = TRACK
+  CURRENTLY_PLAYING =TRACK
  end
- if MODE == "PLAY" then
-  PLAY()
- elseif MODE == "TITLE" then
-  TITLE()
- elseif MODE == "GAMEOVER" then
-  GAMEOVER()
- elseif MODE == "WIN" then
-  WINSCREEN()
- end
- if DEBUG then
-  debug_text()
- end
- T = T + 1
+ if MODE == "CONTROLS" then
+  CONTROLS()
+	elseif MODE == "PLAY" then
+	 PLAY()
+	elseif MODE == "TITLE" then
+	 TITLE()
+	elseif MODE == "GAMEOVER" then
+	 GAMEOVER()
+	elseif MODE == "WIN" then
+	 WINSCREEN()
+	end
+	if debug then
+	 debug_text()
+	end
+	t=t+1
 end
 
-function init()
- T = 0
- START = { x = 20 + (VIEW.w * SCREEN.x * 8), y = 60 + (VIEW.h * SCREEN.y * 8) }
- SPAWN_ORB = nil
- LIVES = 3
- TIME_REMAINING = 120
- PLAYER.x = START.x
- PLAYER.y = START.y
- restore_collected()
+function CONTROLS()
+ cls(1)
+ local bx = -8
+ map(210, 102, 30, 17, bx, 0, 1)
+ line_sh(bx + 36, 75, bx + 36 + 40, 75 - 10, 6)
+ print_sh("MOVE", bx + 20, 79)
+
+ line_sh(bx + 168, 56, bx + 168 + 30, 56 - 20, 6)
+ print_sh("RUN (" .. controls()["RUN"] .. ")", bx + 200, 32)
+
+ line_sh(bx + 162, 70, bx + 162 + 35, 70 + 10, 6)
+ print_sh("JUMP (" .. controls()["JUMP"] .. ")", bx + 199, 83)
+
+ print_sh("TOFU CONTROLS", bx + 82, 12)
+
+ print_sh("PRESS ESC TO SET CONTROLS", bx + 52, 121)
+
+ if btnp(4) then MODE = "TITLE" end
+
+end
+
+function line_sh(x0, y0, x1, y1, color)
+ line(x0, y0, x1, y1, color)
+ line(x0, y0+1, x1, y1 + 1, 0)
+end
+
+function print_sh(msg, x, y, color)
+  if color == nil then color = 12 end
+  print(msg, x+1, y+1, 0)
+  print(msg, x, y, color)
 end
 
 function WINSCREEN()
- TRACK = 0
+ TRACK=0
  do_wait()
- -- vx=1
- update()
- draw()
- draw_win()
+-- vx=1
+	update()
+	draw()
+	draw_win()
 end
 
 function draw_win()
- local offy = math.min(0, -136 + WIN_T)
- map(210, 68, 30, 17, 0, offy, 1)
- WIN_T = WIN_T + 1
- if btnp(4) then
-  if WIN_T < 136 + 16 then
-   WIN_T = 136 + 16
-  else
-   MODE = "TITLE"
-  end
+ offy = math.min(0, -136 + win_t)
+	map(210, 68, 30, 17, 0, offy, 1)
+	win_t = win_t + 1
+	if btnp(4) then
+	 if win_t < 136 + 16 then
+		 win_t = 136 + 16
+		else
+		   MODE = "TITLE"
+		end
  end
 end
 
@@ -133,7 +170,7 @@ function TITLE()
  if SHOW_MENU then
   draw_menu()
  else
-  if T % 60 < 30 then
+  if t % 60 < 30 then
    print("-= Press JUMP to play =-", 55, 110, 12)
   end
   if btnp(4) and not SHOW_MENU then
@@ -145,28 +182,28 @@ end
 SELECTED = 1
 
 function draw_menu()
- map(210, 85, VIEW.w, VIEW.h, 0, 0, 1)
+ map(210, 85, view.w, view.h, 0, 0, 1)
  print("STAGE SELECT", 86, 43, 12)
 
- if btnp(2) or btnp(3) then
-  SELECTED = (SELECTED + 1) % 2
- end
+	if btnp(2) or btnp(3) then
+	 SELECTED = (SELECTED + 1) % 2
+	end
 
- if btnp(4) then
-  SCREEN.y = SELECTED
+	if btnp(4) then
+  start_screen_y = SELECTED
   MODE = "PLAY"
   init()
   spawn_tofu()
   SHOW_MENU = false
- end
+	end
 
- if SELECTED == 1 and T % 60 < 30 then
+ if SELECTED == 1 and t % 60 < 30 then
   print("HARD", 135, 60, 12)
  else
   print("EASY", 75, 60, 12)
  end
 
- if SELECTED == 0 and T % 60 < 30 then
+ if SELECTED == 0 and t % 60 < 30 then
   print("EASY", 75, 60, 12)
  else
   print("HARD", 135, 60, 12)
@@ -174,47 +211,49 @@ function draw_menu()
 end
 
 function anim_title(id, x, y)
- if id == 192 or id == 193 or id == 208 or id == 209 then
-  off = ((T // 15) % 4) * 2
+ if id == 192 or id == 193 or
+    id == 208 or id == 209 then
+  off = ((t // 15) % 4) * 2
   return id + off
- end
+	end
  return id
 end
 
 function GAMEOVER()
- cls(1)
- TRACK = 3
+	cls(1)
+	TRACK=3
  do_wait()
- update()
- draw()
- offy = math.min(16, -136 + GAME_OVER_T)
- map(210, 34, 30, 17, 0, offy, 1)
- GAME_OVER_T = GAME_OVER_T + 1
- if btnp(4) then
-  if GAME_OVER_T < 136 + 16 then
-   GAME_OVER_T = 136 + 16
-  else
-   MODE = "TITLE"
-  end
+	update()
+	draw()
+ offy = math.min(16, -136 + game_over_t)
+	map(210, 34, 30, 17, 0, offy, 1)
+	game_over_t = game_over_t + 1
+	if btnp(4) then
+	 if game_over_t < 136 + 16 then
+		 game_over_t = 136 + 16
+		else
+		   MODE = "TITLE"
+		end
  end
 end
 
 function PLAY()
  TRACK = 1
- handle_input()
- SLOW_T = SLOW_T + 1
- if SLOW_T % SLOW_D ~= 0 then
+	handle_input()
+ SLOW_T = SLOW_T+1
+ if SLOW_T % SLOW_D ~=0 then
   return
  end
  do_wait()
- update()
- draw()
+	update()
+	draw()
+	jump_frames = jump_frames - 1
 end
 
 function do_wait()
  local keep = {}
  for _, wait in ipairs(WAIT) do
-  if T > wait.t then
+  if t > wait.t then
    wait.act()
   else
    table.insert(keep, wait)
@@ -224,53 +263,46 @@ function do_wait()
 end
 
 function play_animation(sprite, x, y, speed)
- local anim = {
-  sprite = sprite,
-  x = x,
-  y = y,
-  speed = speed,
-  t = T
- }
- table.insert(ANIMS, anim)
+	local anim = { sprite=sprite, x=x, y=y, speed=speed, t=t }
+	table.insert(ANIMS, anim)
 end
 
 function update()
- if T % 60 == 0 and MODE == "PLAY" then
-  TIME_REMAINING = math.max(0, TIME_REMAINING - 1)
+ if t % 60 == 0 and MODE == "PLAY" then
+  time_remaining = math.max(0, time_remaining - 1)
  end
- if TIME_REMAINING == 0 and not PLAYER.is_dead then
-  LIVES = 0
+ if time_remaining == 0 and not dead then
+  lives = 0
   die()
   return
  end
- HIT_BOXES = {}
+ hit_boxes = {}
  update_enemies()
- update_position()
- check_orbs()
+	update_position()
+	check_orbs()
 
- if hit_spike() or hit_enemy() then
-  die()
- else
-  check_win()
- end
+
+	if hit_spike() or hit_enemy() then
+	 die()
+	else
+		check_win()
+	end
 end
 
 function check_win()
- if FRIEND == nil then
-  return
- end
- local box = bbox(FRIEND.x, FRIEND.y)
+ if friend == nil then return end
+ box = bbox(friend.x, friend.y)
  add_box(box, 7)
  if collides(tofu_box(), box) and MODE ~= "WIN" then
   MODE = "WIN"
-  WIN_T = 0
+  win_t = 0
  end
 end
 
 function hit_enemy()
- local pbox = tofu_box()
- for _, enm in ipairs(ENEMIES) do
-  local box = bbox(enm.x + 2, enm.y + 2, 12, 12)
+ pbox = tofu_box()
+ for _, enm in ipairs(enemies) do
+  box = bbox(enm.x + 2, enm.y + 2, 12, 12)
   add_box(box, 7)
   if collides(box, pbox) then
    return true
@@ -280,192 +312,174 @@ function hit_enemy()
 end
 
 function die()
- play_animation(SPR.TOFU_DEATH, PLAYER.x, PLAYER.y, 30)
- -- sfx(1, "C-5", 60, 0, 8)
- sfx(1, "D#5", 60, 3, 8)
- PLAYER.is_dead = true
- wait(120, respawn)
+	 play_animation(SPR.TOFU_DEATH, x, y, 30)
+		--sfx(1, "C-5", 60, 0, 8)
+		sfx(1, "D#5", 60, 3, 8)
+		dead = true
+	 wait(120, respawn)
 end
 
 function update_enemies()
  local keep = {}
  local tofu_foot = tofu_ground_collider()
- for _, enm in ipairs(ENEMIES) do
+ for _, enm in ipairs(enemies) do
   local box = bbox(enm.x, enm.y)
-  local head = bbox(enm.x, enm.y - 1, 16, 4)
+  local head = bbox(enm.x, enm.y-1, 16, 4)
   add_box(head, 7)
   if collides(head, tofu_foot) then
-   table.insert(DEAD_ENEMIES, enm)
+   table.insert(dead_enemies, enm)
    play_animation(SPR.ENEMY_DEATH, enm.x, enm.y, 30)
-   local bounce = BOUNCE.short
-   if btn(4) then
-    bounce = BOUNCE.high
-   end
-   PLAYER.vy = bounce
+   bounce = short_bounce
+   if btn(4) then bounce = high_bounce end
+   vy = bounce
    sfx(3, "C-3", 30, 3, 8)
-   -- sfx(3, "G-3", 30, 0, 8)
+   --sfx(3, "G-3", 30, 0, 8)
   elseif not on_screen(box) then
    unspawn(enm)
   else
    table.insert(keep, enm)
-   local cmds = commands(box)
-   for cmd, _ in pairs(cmds) do
-    if cmd == CMD.STOP then
-     enm.vx = 0
-    end
-    if cmd == CMD.SLOW then
-     enm.speed = 0.5
-    end
-    if cmd == CMD.FAST then
-     enm.speed = 2
-    end
-    if cmd == CMD.GO_LEFT then
-     enm.vx = -1
-    end
-    if cmd == CMD.GO_RIGHT then
-     enm.vx = 1
-    end
-   end
-   enm.x = enm.x + enm.vx * enm.speed
-   add_box(box, 5)
-  end
+	  cmds = commands(box)
+	  for cmd, _ in pairs(cmds) do
+	   if cmd == CMD.STOP then
+	    enm.vx=0
+	   end
+				if cmd == CMD.SLOW then
+		   enm.speed = 0.5
+		  end
+		  if cmd == CMD.FAST then
+		   enm.speed = 2
+		  end
+		  if cmd == CMD.GO_LEFT then
+		   enm.vx = -1
+		  end
+		  if cmd == CMD.GO_RIGHT then
+		   enm.vx = 1
+		  end
+	  end
+	  enm.x = enm.x + enm.vx*enm.speed
+			add_box(box, 5)
+	 end
  end
- ENEMIES = keep
+ enemies = keep
 end
 
 function on_screen(box)
- local screen = bbox(CAM.x * 8, CAM.y * 8, 240, 136)
+ screen = bbox(cam_x*8, cam_y*8, 240, 136)
  return collides(box, screen)
 end
 
 function bbox(x, y, w, h)
- if w == nil then
-  w = 16
- end
- if h == nil then
-  h = 16
- end
- return {
-  left = x,
-  right = x + w,
-  top = y,
-  bottom = y + h
- }
+ if w == nil then w = 16 end
+ if h == nil then h = 16 end
+ return {left=x, right=x+w, top=y, bottom=y+h}
 end
 
 function wait(frames, act)
- table.insert(WAIT, {
-  t = T + frames,
-  act = act
- })
+ table.insert(WAIT, { t=t+frames, act=act })
 end
 
 function update_position()
- PLAYER.is_on_ground = check_ground()
- if PLAYER.is_on_ground then
-  math.floor(PLAYER.y)
+ on_ground = check_ground()
+ if on_ground then
+  math.floor(y)
  else
-  PLAYER.vy = math.min(MAX_VY, PLAYER.vy + GRAVITY)
+  vy = math.min(max_vy, vy + gravity)
  end
 
- if can_move(PLAYER.vx, 0) then
-  PLAYER.x = PLAYER.x + PLAYER.vx
- else
-  PLAYER.vx = 0
+	if can_move(vx, 0) then
+			x = x + vx
+	else
+	  vx = 0
  end
 
- if can_move(0, PLAYER.vy) then
-  PLAYER.y = PLAYER.y + PLAYER.vy
- else
-  PLAYER.vy = 0
- end
+	if can_move(0, vy) then
+		y = y + vy
+	else
+	 vy = 0
+	end
 end
 
 function tofu_ground_collider()
  local box = {
-  left = PLAYER.x + 1,
-  top = PLAYER.y + PLAYER.vy + 15,
-  right = PLAYER.x + 15,
-  bottom = PLAYER.y + PLAYER.vy + 16
- }
- add_box(box, 4)
- return box
+	 left = x + 1, top = y + vy + 15,
+		right = x + 15, bottom = y + vy + 16
+	}
+	add_box(box, 4)
+	return box
 end
 
 function check_ground()
- local box = tofu_ground_collider()
- local gs = find_tags(box, 0, 2)
- if #gs == 0 then
-  return false
- end
- PLAYER.y = gs[1].top - 16
+ box = tofu_ground_collider()
+	gs = find_tags(box, 0, 2)
+	if #gs == 0 then return false end
+	y = gs[1].top-16
  return true
 end
 
 function can_move(nx, ny)
  local box = tofu_box(nx, ny)
- add_box(box, 3)
+	add_box(box, 3)
  return not in_ground(box)
 end
 
 function check_orbs()
  local box = tofu_box()
- local keep = {}
- for _, orb in ipairs(ORBS) do
+	local keep = {}
+ for _, orb in ipairs(orbs) do
   add_box(orb, 5)
-  if collides(box, orb) then
-   table.insert(COLLECTED, {
-    item = orb,
-    id = 192,
-    x = orb.x // 8,
-    y = orb.y // 8
-   })
-   SPAWN_ORB = orb
-   sfx(0, 'D-6', 60, 3, 8)
-   play_animation(SPR.ORB_COLLECT, orb.x, orb.y, 7)
-   LIVES = LIVES + 1
-  else
-   table.insert(keep, orb)
-  end
+	 if collides(box, orb) then
+		 table.insert(collected, {item=orb, id=192, x=orb.x//8, y=orb.y//8})
+			spawn_orb = orb
+			--sfx(0, 'C-6', 60, 0, 8)
+			--sfx(0, 'C#6', 60, 1, 8)
+			sfx(0, 'D-6', 60, 3, 8)
+			play_animation(SPR.ORB_COLLECT, orb.x, orb.y, 7)
+			lives = lives + 1
+		else
+		 table.insert(keep, orb)
+		end
  end
- ORBS = keep
+ orbs = keep
 end
 
 function spawn_tofu()
- PLAYER.is_dead = false
- if SPAWN_ORB then
-  PLAYER.x = SPAWN_ORB.x
-  PLAYER.y = SPAWN_ORB.y
+ dead = false
+ if spawn_orb then
+  x = spawn_orb.x
+  y = spawn_orb.y
  else
-  PLAYER.x = START.x
-  PLAYER.y = START.y
+  x = start_x
+  y = start_y
  end
- play_animation(SPR.ORB_COLLECT, PLAYER.x, PLAYER.y, 7)
- sfx(2, "G-3", 60, 3, 8)
- -- Restore enemies
- for _, e in pairs(DEAD_ENEMIES) do
-  unspawn(e)
- end
- DEAD_ENEMIES = {}
- restore_collected()
+ play_animation(SPR.ORB_COLLECT, x, y, 7)
+	--sfx(2, "C-5", 60, 0, 8)
+	--sfx(2, "E-4", 60, 1, 8)
+	sfx(2, "G-3", 60, 3, 8)
+	-- Restore enemies
+	for _,e in pairs(dead_enemies) do
+	 unspawn(e)
+	end
+	dead_enemies = {}
+	restore_collected()
 end
 
 function restore_collected()
  -- Restore collected items
  local keep = {}
- for _, c in ipairs(COLLECTED) do
-  if SPAWN_ORB ~= c.item then
+ for _,c in ipairs(collected) do
+	 if spawn_orb ~= c.item then
    mset(c.x, c.y, c.id)
   else
    table.insert(keep, c)
   end
  end
- COLLECTED = keep
+ collected = keep
 end
 
+
 function respawn()
- LIVES = math.max(0, LIVES - 1)
- if LIVES == 0 then
+ lives = math.max(0, lives - 1)
+ if lives == 0 then
   MODE = "GAMEOVER"
   return
  end
@@ -473,38 +487,33 @@ function respawn()
 end
 
 function tofu_box(nx, ny)
- if PLAYER.is_dead then
-  return EMPTY
- end
- if nx == nil then
-  nx = 0
- end
- if ny == nil then
-  ny = 0
- end
- return {
-  left = PLAYER.x + nx + 1,
-  top = PLAYER.y + 1 + ny,
-  right = PLAYER.x + nx + 15,
-  bottom = PLAYER.y + ny + 15
- }
+ if dead then return EMPTY end
+ if nx == nil then nx = 0 end
+ if ny == nil then ny = 0 end
+ return { left = x + nx + 1, top = y + 1 + ny,	right = x + nx + 15, bottom = y + ny + 15 }
 end
 
 function hit_spike()
- SPIKES = find_tags(tofu_box(), 1)
- return #SPIKES > 0
+ spikes = find_tags(tofu_box(), 1)
+ return #spikes > 0
 end
 
 function collides(a, b)
- if a.left == a.right or a.top == a.bottom or b.left == b.right or b.top == b.bottom then
+
+	if a.left == a.right or
+	   a.top == a.bottom or
+				b.left == b.right or
+				b.top == b.bottom then
+	 return false
+	end
+
+ if a.left > b.right or
+    b.left > a.right then
   return false
  end
 
- if a.left > b.right or b.left > a.right then
-  return false
- end
-
- if a.top > b.bottom or b.top > a.bottom then
+ if a.top > b.bottom or
+    b.top > a.bottom then
   return false
  end
 
@@ -512,41 +521,38 @@ function collides(a, b)
 end
 
 function handle_input()
- PLAYER.vx = 0
- local run = 0
+ vx = 0
+ run = 0
  if btn(5) then
-  ANIM_SPEED = 3
-  run = RUN
- else
-  ANIM_SPEED = 7
- end
- if btn(2) then
-  PLAYER.vx = -SPEED - run
- end
- if btn(3) then
-  PLAYER.vx = SPEED + run
- end
+	 anim_speed = 3
+  run = run_speed
+		else
+		anim_speed = 7
+	end
+	if btn(2) then vx=-speed-run end
+	if btn(3) then vx=speed+run end
 
- if btnp(4) and can_jump() then
-  PLAYER.vy = JUMP
- end
+	if btnp(4) and can_jump() then
+	 vy=jump_power
+	end
+
 end
 
 function can_jump()
- return PLAYER.is_on_ground
+ return on_ground or jump_frames > 0
 end
 
 function commands(bbox)
- local found = {}
- local left = bbox.left // 8
- local right = bbox.right // 8
- local top = bbox.top // 8
- local bottom = bbox.bottom // 8
- for cx = left, right do
-  for cy = top, bottom do
-   local id = mget(cx, cy)
+ found = {}
+ left = bbox.left//8
+ right = bbox.right//8
+ top = bbox.top//8
+ bottom = bbox.bottom//8
+ for cx=left,right do
+  for cy=top,bottom do
+   id = mget(cx, cy)
    if fget(id, 5) then
-    found[id] = true
+				found[id] = true
    end
   end
  end
@@ -554,15 +560,15 @@ function commands(bbox)
 end
 
 function has_flag(bbox, flag)
- local left = bbox.left // 8
- local right = bbox.right // 8
- local top = bbox.top // 8
- local bottom = bbox.bottom // 8
- for cx = left, right do
-  for cy = top, bottom do
-   local id = mget(cx, cy)
+ left = bbox.left//8
+ right = bbox.right//8
+ top = bbox.top//8
+ bottom = bbox.bottom//8
+ for cx=left,right do
+  for cy=top,bottom do
+   id = mget(cx, cy)
    if fget(id, flag) then
-    return id
+				return id
    end
   end
  end
@@ -570,42 +576,34 @@ function has_flag(bbox, flag)
 end
 
 function find_tags(bbox, tag, show)
- local found = {}
- local left = bbox.left // 8
- local right = bbox.right // 8
- local top = bbox.top // 8
- local bottom = bbox.bottom // 8
- for cx = left, right do
-  for cy = top, bottom do
-   local id = mget(cx, cy)
+ found ={}
+ left = bbox.left//8
+ right = bbox.right//8
+ top = bbox.top//8
+ bottom = bbox.bottom//8
+ for cx=left,right do
+  for cy=top,bottom do
+   id = mget(cx, cy)
    if fget(id, tag) then
-    local box = {
-     left = cx * 8,
-     top = cy * 8,
-     right = (cx + 1) * 8,
-     bottom = (cy + 1) * 8
-    }
-    table.insert(found, box)
+	   box = { left = cx*8, top = cy*8, right = (cx+1)*8, bottom = (cy+1)*8 }
+				table.insert(found, box)
    end
   end
  end
- if show then
-  add_boxes(found, show)
- end
+ if show then add_boxes(found, show) end
  return found
 end
 
 function add_box(bbox, color)
- if not SHOW_HIT_BOXES then
-  return
- end
- if bbox.left == nil or bbox.right == nil or bbox.top == nil or bbox.bottom == nil then
+ if not show_hit_boxes then return end
+ if bbox.left == nil or
+    bbox.right == nil or
+    bbox.top == nil or
+    bbox.bottom == nil
+ then
   error("Invalid bbox!")
  end
- table.insert(HIT_BOXES, {
-  box = bbox,
-  color = color
- })
+ table.insert(hit_boxes, {box=bbox, color=color})
 end
 
 function add_boxes(arr, color)
@@ -615,15 +613,16 @@ function add_boxes(arr, color)
 end
 
 function in_ground(bbox)
- local gs = find_tags(bbox, 0, 2)
+ gs = find_tags(bbox, 0, 2)
  return #gs > 0
 end
 
+
 function draw()
  cls(1)
- CAM.x = (PLAYER.x // (VIEW.w * 8)) * VIEW.w
- CAM.y = (PLAYER.y // (VIEW.h * 8)) * VIEW.h
- draw_map()
+ cam_x = (x // (view.w*8)) * view.w
+ cam_y = (y // (view.h*8)) * view.h
+	draw_map()
  draw_enemies()
  draw_friend()
  draw_tofu()
@@ -631,29 +630,28 @@ function draw()
  draw_animations()
  draw_hit_boxes()
  draw_overlay()
- debug_text()
+	debug_text()
 end
 
 function draw_friend()
- if FRIEND == nil then
-  return
- end
- local sprite = SPR.TOFU_FRIEND.id
+ if friend == nil then return end
+ sprite = SPR.TOFU_FRIEND.id
  if MODE == "WIN" then
   sprite = SPR.FRIEND_SMILE.id
  end
- draw_spr(sprite, FRIEND.x, FRIEND.y)
+ draw_spr(sprite, friend.x, friend.y)
 end
 
 function draw_overlay()
  map(210, 0, 30, 3, 0, 0, 1, 1, anim_overlay)
- print(LIVES, 14, 1, 12)
- print(TIME_REMAINING, 240 - 24, 1, 12)
+ print(lives, 14, 1, 12)
+ print(time_remaining, 240-24, 1, 12)
 end
+
 
 function anim_overlay(id, x, y)
  if id == 225 then
-  local off = 7 - ((T // 60) % 8)
+  off = 7 - ((t // 60) % 8)
   return id + off
  end
  return id
@@ -661,16 +659,12 @@ end
 
 function draw_enemies()
  local sp = SPR.ENEMY_MOVE
- local off = (T // 7) % sp.frames
- for _, enm in ipairs(ENEMIES) do
-  local id = sp.id + off * sp.w
-  if enm.vx == 0 then
-   id = SPR.ENEMY_IDLE.id
-  end
+ local off = (t // 7) % sp.frames
+ for _, enm in ipairs(enemies) do
+  local id = sp.id + off*sp.w
+  if enm.vx == 0 then id = SPR.ENEMY_IDLE.id end
   local flip = 0
-  if enm.vx > 0 then
-   flip = 1
-  end
+  if enm.vx > 0 then flip = 1 end
   draw_spr(id, enm.x, enm.y, flip)
  end
 end
@@ -678,11 +672,11 @@ end
 function draw_animations()
  local keep = {}
  for _, a in ipairs(ANIMS) do
-  local ticks = T - a.t
+  local ticks = t - a.t
   local offset = (ticks // a.speed)
   if offset < a.sprite.frames then
-   local id = a.sprite.id + offset * a.sprite.w
-   draw_spr(id, a.x, a.y)
+	  local id = a.sprite.id + offset*a.sprite.w
+			draw_spr(id, a.x, a.y)
    table.insert(keep, a)
   end
  end
@@ -690,77 +684,67 @@ function draw_animations()
 end
 
 function draw_orbs()
- for _, orb in ipairs(ORBS) do
+ for _, orb in ipairs(orbs) do
   draw_orb(orb.x, orb.y)
  end
 end
 
 function draw_orb(x, y)
- local base = SPR.ORB
- local frame = (T // 15) % base.frames
- local sprite = base.id + frame * base.w
+ base = SPR.ORB
+ frame = (t // 15) % base.frames
+ sprite = base.id + frame * base.w
  draw_spr(sprite, x, y)
 end
 
 function draw_spr(id, x, y, f, w, h, m)
- if w == nil then
-  w = 2
- end
- if h == nil then
-  h = 2
- end
- if f == nil then
-  f = 0
- end
- if m == nil then
-  m = 6
- end
- spr(id, x - CAM.x * 8, y - CAM.y * 8, m, 1, f, 0, w, h)
+ if w == nil then w = 2 end
+ if h == nil then h = 2 end
+ if f == nil then f = 0 end
+ if m == nil then m = 6 end
+ spr(id, x - cam_x*8, y - cam_y*8, m, 1, f, 0, w, h)
 end
 
 function debug_text()
- if not DEBUG then
-  return
- end
- print(MODE, 0, 8, 12)
- print(WIN_T, 0, 16, 12)
+ if not debug then return end
+ print(bx .. ", " .. by, 0, 8, 12)
+ print(win_t, 0, 16, 12)
 end
 
 function draw_hit_boxes()
- if not SHOW_HIT_BOXES then
-  return
- end
- local offx = CAM.x * 8
- local offy = CAM.y * 8
+ if not show_hit_boxes then return end
+ offx = cam_x * 8
+ offy = cam_y * 8
 
- for _, b in ipairs(HIT_BOXES) do
-  local box = b.box
-  local color = b.color
-  rectb(box.left - offx, box.top, box.right - box.left, box.bottom - box.top, color)
- end
+	for _, b in ipairs(hit_boxes) do
+	 box = b.box
+		color = b.color
+	 rectb(box.left - offx, box.top, box.right - box.left, box.bottom - box.top, color)
+	end
 end
 
 function draw_map()
  update_orbs()
- map(CAM.x, CAM.y, VIEW.w, VIEW.h, 0, 0, 0, 1, remap)
+ map(cam_x, cam_y,
+     view.w, view.h,
+     0, 0, 0, 1, remap)
 end
 
 function update_orbs()
  keep = {}
  screen = {
-  left = CAM.x * 8,
-  top = CAM.y * 8,
-  right = CAM.x * 8 + 240,
-  bottom = CAM.y * 8 + 136
+  left = cam_x * 8,
+  top = cam_y * 8,
+  right = cam_x * 8 + 240,
+  bottom = cam_y * 8 + 136
  }
- for _, orb in ipairs(ORBS) do
-  if collides(orb, screen) then
-   table.insert(keep, orb)
-  else
-   mset(orb.x // 8, orb.y // 8, 192)
-  end
+ for _, orb in ipairs(orbs) do
+		if collides(orb, screen) then
+		 table.insert(keep, orb)
+		else
+		 mset(orb.x//8, orb.y//8, 192)
+		end
  end
- ORBS = keep
+ orbs = keep
 end
 
 function remap(id, x, y)
@@ -771,73 +755,54 @@ function remap(id, x, y)
   spawn(id + 256, x, y)
  end
  if fget(id, 6) then
-  mset(x, y, 0)
-  return 0
+   mset(x, y, 0)
+   return 0
  end
  return id
 end
 
 function unspawn(enm)
- play_animation(SPR.ORB_COLLECT, enm.mx * 8, enm.my * 8, 7)
- wait(7 * 3, function()
-  mset(enm.mx, enm.my, enm.mid)
- end)
+ play_animation(SPR.ORB_COLLECT, enm.mx*8, enm.my*8, 7)
+ wait(7*3, function () mset(enm.mx, enm.my, enm.mid) end)
+
 end
 
 function spawn(id, x, y)
- if id == SPR.ORB.id then
-  table.insert(ORBS, {
-   x = x * 8,
-   y = y * 8,
-   left = (x * 8) + 4,
-   top = (y * 8) + 4,
-   bottom = ((y + 2) * 8) - 4,
-   right = ((x + 2) * 8) - 4
-  })
- elseif id == SPR.ENEMY_IDLE.id then
-  table.insert(ENEMIES, {
-   x = x * 8,
-   y = y * 8,
-   mx = x,
-   my = y,
-   vx = -1,
-   mid = 96,
-   vy = 0,
-   speed = 0.5
-  })
- elseif id == SPR.TOFU_FRIEND.id then
-  FRIEND = {
-   x = x * 8,
-   y = y * 8,
-   mx = x,
-   my = y,
-   mid = 44
-  }
- end
+	if id == SPR.ORB.id then
+	 table.insert(orbs,
+		 {x = x * 8, y = y * 8,
+			left = (x * 8) + 4, top = (y * 8) + 4,
+			bottom = ((y+2)*8) - 4, right = ((x+2)*8) - 4})
+	elseif id == SPR.ENEMY_IDLE.id then
+	 table.insert(enemies,
+		 {x = x * 8, y = y * 8, mx=x, my=y, vx=-1, mid=96, vy=0, speed=0.5})
+	elseif id == SPR.TOFU_FRIEND.id then
+  friend = { x = x * 8, y = y * 8, mx=x, my=y, mid=44}
+	end
 end
 
 function draw_tofu()
- if PLAYER.is_dead then
-  return
- end
- local base = SPR.TOFU_IDLE
- if PLAYER.vx ~= 0 then
-  base = SPR.TOFU_MOVE
- end
- if PLAYER.vy < 0 then
-  PLAYER.dir = 1
- end
- if PLAYER.vx > 0 then
-  PLAYER.dir = 0
- end
- if MODE == "WIN" then
-  base = SPR.TOFU_SMILE
- end
- local frame = (T // ANIM_SPEED) % base.frames
- local sprite = base.id + frame * base.w
- draw_spr(sprite, PLAYER.x, PLAYER.y, PLAYER.dir)
+ if dead then return end
+ base = SPR.TOFU_IDLE
+ if vx ~= 0 then base = SPR.TOFU_MOVE end
+ if vx < 0 then dir = 1 end
+ if vx > 0 then dir = 0 end
+ if MODE == "WIN" then base = SPR.TOFU_SMILE end
+ frame = (t // anim_speed) % base.frames
+ sprite = base.id + frame * base.w
+ draw_spr(sprite, x, y, dir)
 end
 
+function controls()
+	local KEY_CODES = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "-", "=", "[", "]", "\\", ";", "'", "GRAVE", ",", ".", "/", "SPACE", "TAB", "RETURN", "BACKSPACE", "DELETE", "INSERT", "PGUP", "PGDN", "HOME", "END", "UP", "DOWN", "LEFT", "RIGHT", "CAPSLOCK", "CTRL", "SHIFT", "ALT", "ESC", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "NUM0", "NUM1", "NUM2", "NUM3", "NUM4", "NUM5", "NUM6", "NUM7", "NUM8", "NUM9", "NUM+", "NUM-", "NUM*", "NUM/", "NUMENTER", "NUM."}
+	local GAMEPAD_ADDR = 0x14E04
+	return {
+		["LEFT"] = KEY_CODES[peek(GAMEPAD_ADDR+2)],
+		["RIGHT"] = KEY_CODES[peek(GAMEPAD_ADDR+3)],
+		["JUMP"] = KEY_CODES[peek(GAMEPAD_ADDR+4)],
+		["RUN"] = KEY_CODES[peek(GAMEPAD_ADDR+5)],
+    }
+end
 -- <TILES>
 -- 000:1111111111111111111111111111111111111111111111111111111111111111
 -- 002:6666666666666666f666666fff6666ff9ff66ff999ffff99999ff99989999998
@@ -869,6 +834,10 @@ end
 -- 097:1111111155551111555551110055551100555551205555512555555155555551
 -- 112:1505550510005000105000501555055511555555111555551133555511333331
 -- 113:5555555150555551005555510555555155555511533331113433331133333311
+-- 130:cffffffcffaffaf0ffaffaf0fffaaff0fffaaff0ffaffaf0ffaffaf0c000000c
+-- 131:cffffffcf44ff440f44ff440ff4444f0fff44ff0fff44ff0fff44ff0c000000c
+-- 132:eeee1111eeee1111eeee1111eeee1111eeee1111eeee1111eeee1111eeee1111
+-- 133:ffffffffffffffffffffffffffffffff11111111111111111111111111111111
 -- 137:3333333333333333333333333333333333333333333333333333333333333333
 -- 138:2222222222222222222222222222222222222222222222222222222222222222
 -- 139:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
@@ -876,7 +845,16 @@ end
 -- 141:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
 -- 142:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
 -- 143:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+-- 144:0000000000cccc000ccccccc0cffccccccffcccccccccccccccfccccccfcfccc
+-- 145:0000000000cccc00ccccccc0cccc4cc0ccc1c2cccccc6cccccffccccccffcccc
+-- 146:cffffffcff6666f0f6ffff60f6ffff60f6666660f6ffff60f6ffff60c000000c
+-- 147:cffffffcf22222f0f22fff20f22222f0f22fff20f22fff20f22222f0c000000c
+-- 160:cccfcccccccccceeccccee00dcce00000dd00000000000000000000000000000
+-- 161:cccccccceecccccc00eecccc0000eccd00000dd0000000000000000000000000
 -- 169:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+-- 170:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+-- 171:4444444444444444444444444444444444444444444444444444444444444444
+-- 172:6666666666666666666666666666666666666666666666666666666666666666
 -- 185:4444444144444443444444434444444344444443444444434444444313333333
 -- 186:6666666166666665666666656666666566666665666666656666666515555555
 -- 187:3333333133333334333333343333333433333334333333343333333414444444
@@ -1255,6 +1233,16 @@ end
 -- 094:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003f10101010101010101010101010102f00000000000000
 -- 095:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003f10101010101010101010101010102f00000000000000
 -- 096:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e00000000000000
+-- 106:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000aaaaaaaa00000000aaaaaaaa480000000000000000
+-- 107:0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaa4800000000000000
+-- 108:0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000aaaaf8aaaaaaaaaaaaaaaa38aaaa4800000000000000
+-- 109:00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000aaaaf8f8f8aaaaaaaaaaaa28aa39aaaa48000000000000
+-- 110:00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000aaaaaaf8aaaaaaaaaaaaaaaa29aaaaaa48000000000000
+-- 111:00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa48000000000000
+-- 112:00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000aaaaaaaaaaaa58585858aaaaaaaaaaaa48000000000000
+-- 113:00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000aaaaaaaa5858000000005858aaaaaaaa48000000000000
+-- 114:0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000aaaa58000000000000000058aaaa5800000000000000
+-- 115:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000058580000000000000000000058580000000000000000
 -- 130:405000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 -- 131:415100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 -- 132:405000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -1281,7 +1269,7 @@ end
 -- 001:0300031003100310032003200330f330f340f350f36003600370038003800390f390f3a0f3a0f3a0f3b0f3c0f3c0f3c0f3d0f3d0f3e0f3e0f3e0f3f0484000000000
 -- 002:e207e218d220c220c220c230b230b240a240a250a2509250926082708280728072906290629062a052a042b042c032c022c022c012d012d002e0f2f0c02000000003
 -- 003:07d007c007c007c007b007a00790079007900790077007600760076007500740072007200710f700f700f700f700f700f700f700f700f700f700f700211000000000
--- 016:080018012800380f480058016800780f88009801a800b80fc800d801e800f80ff800f800f800f800f800f800f800f800f800f800f800f800f800f800279000000000
+-- 016:080018012800380f480058016800780f88009801a800b80fc800d801e800f80ff800f800f800f800f800f800f800f800f800f800f800f800f800f80017b000000000
 -- 020:590049003900390039005904690079048900890189008901890089018900f901f900f901f900f901f900f901f900f900f900f900f900f900f900f900347000410044
 -- 024:09000900090009002900590079009900b900d900f900f900f900f900f900f900f900f900f900f900f900f900f900f900f900f900f900f900f900f900364000000000
 -- 025:09000900090009000900090009000900090009000902090e0900090009000900090009000900090009000900090009000900090009000900090009003420000000a2

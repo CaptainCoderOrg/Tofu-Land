@@ -15,7 +15,10 @@
         "mget",
         "fget",
         "spr",
-        "rectb"
+        "rectb",
+        "peek",
+        "poke",
+        "line"
     ],
     "Lua.diagnostics.disable": [
         "lowercase-global"
