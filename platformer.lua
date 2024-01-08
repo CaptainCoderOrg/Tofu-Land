@@ -114,13 +114,33 @@ function CONTROLS()
  local bx = -8
  map(210, 102, 30, 17, bx, 0, 1)
  line_sh(bx + 36, 75, bx + 36 + 40, 75 - 10, 6)
- print_sh("MOVE", bx + 20, 79)
+ 
+ ctrls = controls()
+ LEFT_KEY = ""
+ if ctrls["LEFT"] ~= nil then LEFT_KEY = ctrls["LEFT"] end
+ RIGHT_KEY = ""
+ if ctrls["RIGHT"] ~= nil then RIGHT_KEY = ctrls["RIGHT"] end
 
+ print_sh("MOVE", bx + 20, 79)
+ SEP = ", "
+ if #LEFT_KEY > 1 or #RIGHT_KEY > 1 then SEP = ",\n" end
+ if LEFT_KEY ~= "" then 
+  print_sh("(" .. LEFT_KEY .. SEP .. RIGHT_KEY .. ")", bx + 20, 89)
+ end
+ 
+
+ 
+ JUMP_KEY = "" 
+ if ctrls["JUMP"] ~= nil then JUMP_KEY = "(" .. ctrls["JUMP"] .. ")" end
+ RUN_KEY = ""
+ if ctrls["RUN"] ~= nil then RUN_KEY = "(" .. ctrls["RUN"] .. ")" end
  line_sh(bx + 168, 56, bx + 168 + 30, 56 - 20, 6)
- print_sh("RUN (" .. controls()["RUN"] .. ")", bx + 200, 32)
+ print_sh("RUN " .. RUN_KEY, bx + 200, 32)
+--  print_sh("RUN", bx + 200, 32)
 
  line_sh(bx + 162, 70, bx + 162 + 35, 70 + 10, 6)
- print_sh("JUMP (" .. controls()["JUMP"] .. ")", bx + 199, 83)
+ print_sh("JUMP " .. JUMP_KEY, bx + 199, 83)
+--  print_sh("JUMP", bx + 199, 83)
 
  print_sh("TOFU CONTROLS", bx + 82, 12)
 
@@ -622,7 +642,7 @@ function draw()
  cls(1)
  cam_x = (x // (view.w*8)) * view.w
  cam_y = (y // (view.h*8)) * view.h
-	draw_map()
+draw_map()
  draw_enemies()
  draw_friend()
  draw_tofu()
@@ -630,7 +650,7 @@ function draw()
  draw_animations()
  draw_hit_boxes()
  draw_overlay()
-	debug_text()
+ debug_text()
 end
 
 function draw_friend()
